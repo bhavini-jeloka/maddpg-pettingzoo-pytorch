@@ -3,7 +3,7 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-from pettingzoo.mpe import simple_adversary_v3, simple_spread_v3, simple_tag_v3
+from PettingZoo.pettingzoo.mpe import simple_adversary_v3, simple_spread_v3, simple_tag_v3
 
 from MADDPG import MADDPG
 
@@ -116,8 +116,8 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     x = range(1, args.episode_num + 1)
     for agent_id, reward in episode_rewards.items():
-        ax.plot(x, reward, label=agent_id)
-        ax.plot(x, get_running_reward(reward))
+        #ax.plot(x, reward, label=agent_id)
+        ax.plot(x, get_running_reward(reward), label=agent_id)
     ax.legend()
     ax.set_xlabel('episode')
     ax.set_ylabel('reward')
