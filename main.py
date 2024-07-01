@@ -148,7 +148,7 @@ if __name__ == '__main__':
                         if agent.find('adversary') != -1: 
                             action_eval[agent] = get_fixed_adversary_policy(env_eval, obs_eval) 
 
-                    next_obs_eval, reward_eval, terminations_eval, done_eval, info_eval = env.step(action_eval)
+                    next_obs_eval, reward_eval, terminations_eval, done_eval, info_eval = env_eval.step(action_eval)
 
                     for agent_id, r in reward_eval.items():  # update reward
                         agent_reward_eval[agent_id] += r
@@ -178,7 +178,7 @@ if __name__ == '__main__':
                         if agent.find('agent') != -1: 
                             action_eval[agent] = get_fixed_agent_policy(env_eval, obs_eval) 
 
-                    next_obs_eval, reward_eval, terminations_eval, done_eval, info_eval = env.step(action_eval)
+                    next_obs_eval, reward_eval, terminations_eval, done_eval, info_eval = env_eval.step(action_eval)
 
                     for agent_id, r in reward_eval.items():  # update reward
                         agent_reward_eval[agent_id] += r
@@ -197,6 +197,7 @@ if __name__ == '__main__':
         
             os.remove(os.path.join(result_dir, 'model.pt'))
 
+            print('Fixed Policy Agent Over')
             print('End Evaluation')
         
     maddpg.save(episode_rewards)  # save final model   
