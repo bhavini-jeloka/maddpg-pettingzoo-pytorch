@@ -14,7 +14,7 @@ def get_env(env_name, ep_len=25):
     if env_name == 'simple_adversary_v3':
         new_env = simple_adversary_v3.parallel_env(max_cycles=ep_len)
     if env_name == 'simple_spread_v3':
-        new_env = simple_spread_v3.parallel_env(max_cycles=ep_len)
+        new_env = simple_spread_v3.parallel_env(N=3, local_ratio=0.5, max_cycles=25, continuous_actions=False)
     if env_name == 'simple_tag_v3':
         new_env = simple_tag_v3.parallel_env(num_good=1, num_adversaries=1, num_obstacles=0, max_cycles=ep_len, continuous_actions=False)
 
@@ -114,93 +114,93 @@ if __name__ == '__main__':
             message += f'sum reward: {sum_reward}'
             print(message)
 
-    
-        if episode == 0 or (episode + 1) % 500 == 0:  # evaluate every 500 episodes
-            eval_ep.append(episode)
-            
-            print('Begin Evaluation')
+        if args.env_name == 'simple_tag_v3':
+            if episode == 0 or (episode + 1) % 500 == 0:  # evaluate every 500 episodes
+                eval_ep.append(episode)
+                
+                print('Begin Evaluation')
 
-            episode_rewards_eval_maddpg = {}
+                episode_rewards_eval_maddpg = {}
 
-            for agent, ep in episode_rewards.items():
-                section = ep[0:episode]  # Extract the section
-                episode_rewards_eval_maddpg[agent] = section  # Store the section in a new dictionary
+                for agent, ep in episode_rewards.items():
+                    section = ep[0:episode]  # Extract the section
+                    episode_rewards_eval_maddpg[agent] = section  # Store the section in a new dictionary
 
-            maddpg.save(episode_rewards_eval_maddpg)  # save model
+                maddpg.save(episode_rewards_eval_maddpg)  # save model
 
-            episode_num_eval = 100 # 1000
-            env_eval, dim_info_eval = get_env(args.env_name, args.episode_length)
+                episode_num_eval = 100 # 1000
+                env_eval, dim_info_eval = get_env(args.env_name, args.episode_length)
 
-            folder_name = total_files + 1
-            
-            maddpg_eval = MADDPG.load(dim_info_eval, os.path.join(result_dir, 'model.pt'))
-            episode_rewards_eval_fixed_adversary = {agent_id: np.zeros(episode_num_eval) for agent_id in env_eval.agents}
-            
-            for episode_eval in range(episode_num_eval):
-                obs_eval, info_eval = env_eval.reset()
-                agent_reward_eval = {agent_id: 0 for agent_id in env_eval.agents}  # agent reward of the current episode
+                folder_name = total_files + 1
+                
+                maddpg_eval = MADDPG.load(dim_info_eval, os.path.join(result_dir, 'model.pt'))
+                episode_rewards_eval_fixed_adversary = {agent_id: np.zeros(episode_num_eval) for agent_id in env_eval.agents}
+                
+                for episode_eval in range(episode_num_eval):
+                    obs_eval, info_eval = env_eval.reset()
+                    agent_reward_eval = {agent_id: 0 for agent_id in env_eval.agents}  # agent reward of the current episode
 
-                for t_eval in range(args.episode_length):
+                    for t_eval in range(args.episode_length):
 
-                    action_eval = maddpg_eval.select_action(obs_eval)
-                    
-                    for agent in action_eval:
-                        if agent.find('adversary') != -1: 
-                            action_eval[agent] = get_fixed_adversary_policy(env_eval, obs_eval) 
-
-                    next_obs_eval, reward_eval, terminations_eval, done_eval, info_eval = env_eval.step(action_eval)
-
-                    for agent_id, r in reward_eval.items():  # update reward
-                        agent_reward_eval[agent_id] += r
+                        action_eval = maddpg_eval.select_action(obs_eval)
                         
-                    obs_eval = next_obs_eval
+                        for agent in action_eval:
+                            if agent.find('adversary') != -1: 
+                                action_eval[agent] = get_fixed_adversary_policy(env_eval, obs_eval) 
 
-                env_eval.close()
-                # episode finishes, record reward
-                for agent_id, reward in agent_reward_eval.items():
-                    episode_rewards_eval_fixed_adversary[agent_id][episode_eval] = reward
-            
-            print('Fixed Policy Adversary Over')
+                        next_obs_eval, reward_eval, terminations_eval, done_eval, info_eval = env_eval.step(action_eval)
 
-            # Evaluation against fixed policy agent
-            env_eval, dim_info_eval = get_env(args.env_name, args.episode_length)
-            episode_rewards_eval_fixed_agent = {agent_id: np.zeros(episode_num_eval) for agent_id in env_eval.agents}
+                        for agent_id, r in reward_eval.items():  # update reward
+                            agent_reward_eval[agent_id] += r
+                            
+                        obs_eval = next_obs_eval
 
-            for episode_eval in range(episode_num_eval):
-                obs_eval, info_eval = env_eval.reset()
-                agent_reward_eval = {agent_id: 0 for agent_id in env_eval.agents}  # agent reward of the current episode
+                    env_eval.close()
+                    # episode finishes, record reward
+                    for agent_id, reward in agent_reward_eval.items():
+                        episode_rewards_eval_fixed_adversary[agent_id][episode_eval] = reward
+                
+                print('Fixed Policy Adversary Over')
 
-                for t_eval in range(args.episode_length):
+                # Evaluation against fixed policy agent
+                env_eval, dim_info_eval = get_env(args.env_name, args.episode_length)
+                episode_rewards_eval_fixed_agent = {agent_id: np.zeros(episode_num_eval) for agent_id in env_eval.agents}
 
-                    action_eval = maddpg_eval.select_action(obs_eval)
-                    
-                    for agent in action_eval:
-                        if agent.find('agent') != -1: 
-                            action_eval[agent] = get_fixed_agent_policy(env_eval, obs_eval) 
+                for episode_eval in range(episode_num_eval):
+                    obs_eval, info_eval = env_eval.reset()
+                    agent_reward_eval = {agent_id: 0 for agent_id in env_eval.agents}  # agent reward of the current episode
 
-                    next_obs_eval, reward_eval, terminations_eval, done_eval, info_eval = env_eval.step(action_eval)
+                    for t_eval in range(args.episode_length):
 
-                    for agent_id, r in reward_eval.items():  # update reward
-                        agent_reward_eval[agent_id] += r
+                        action_eval = maddpg_eval.select_action(obs_eval)
                         
-                    obs_eval = next_obs_eval
+                        for agent in action_eval:
+                            if agent.find('agent') != -1: 
+                                action_eval[agent] = get_fixed_agent_policy(env_eval, obs_eval) 
 
-                env_eval.close()
-                # episode finishes, record reward
-                for agent_id, reward in agent_reward_eval.items():
-                    episode_rewards_eval_fixed_agent[agent_id][episode_eval] = reward
+                        next_obs_eval, reward_eval, terminations_eval, done_eval, info_eval = env_eval.step(action_eval)
+
+                        for agent_id, r in reward_eval.items():  # update reward
+                            agent_reward_eval[agent_id] += r
+                            
+                        obs_eval = next_obs_eval
+
+                    env_eval.close()
+                    # episode finishes, record reward
+                    for agent_id, reward in agent_reward_eval.items():
+                        episode_rewards_eval_fixed_agent[agent_id][episode_eval] = reward
+                
+                print('Fixed Policy Agent Over')
+                # print average reward for 1000 episodes, don't plot
+                evaluation_score_agent.append(np.mean(episode_rewards_eval_fixed_adversary['agent_0']))
+                evaluation_score_adversary.append(np.mean(episode_rewards_eval_fixed_agent['adversary_0']))
             
-            print('Fixed Policy Agent Over')
-            # print average reward for 1000 episodes, don't plot
-            evaluation_score_agent.append(np.mean(episode_rewards_eval_fixed_adversary['agent_0']))
-            evaluation_score_adversary.append(np.mean(episode_rewards_eval_fixed_agent['adversary_0']))
-        
-            print('Evaluation Score Agent:', evaluation_score_agent)
-            print('Evaluation Score Adversary:', evaluation_score_adversary)
-            os.remove(os.path.join(result_dir, 'model.pt'))
+                print('Evaluation Score Agent:', evaluation_score_agent)
+                print('Evaluation Score Adversary:', evaluation_score_adversary)
+                os.remove(os.path.join(result_dir, 'model.pt'))
 
-            print('End Evaluation')
-        
+                print('End Evaluation')
+            
     maddpg.save(episode_rewards)  # save final model   
     print('End Training')
 
@@ -220,8 +220,10 @@ if __name__ == '__main__':
     x = range(1, args.episode_num + 1)
     for agent_id, reward in episode_rewards.items():
         ax.plot(x, get_running_reward(reward), label=agent_id)
-    ax.plot(eval_ep, evaluation_score_agent, c='cyan', label='Evaluation against fixed adversary policy')
-    ax.plot(eval_ep, evaluation_score_adversary, c='pink', label='Evaluation against fixed agent policy')
+
+    if args.env_name == 'simple_tag_v3':
+        ax.plot(eval_ep, evaluation_score_agent, c='cyan', label='Evaluation against fixed adversary policy')
+        ax.plot(eval_ep, evaluation_score_adversary, c='pink', label='Evaluation against fixed agent policy')
     ax.legend()
     ax.set_xlabel('episode')
     ax.set_ylabel('reward')
