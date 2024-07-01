@@ -190,14 +190,15 @@ if __name__ == '__main__':
                 for agent_id, reward in agent_reward_eval.items():
                     episode_rewards_eval_fixed_agent[agent_id][episode_eval] = reward
             
-
+            print('Fixed Policy Agent Over')
             # print average reward for 1000 episodes, don't plot
             evaluation_score_agent.append(np.mean(episode_rewards_eval_fixed_adversary['agent_0']))
             evaluation_score_adversary.append(np.mean(episode_rewards_eval_fixed_agent['adversary_0']))
         
+            print('Evaluation Score Agent:', evaluation_score_agent)
+            print('Evaluation Score Adversary:', evaluation_score_adversary)
             os.remove(os.path.join(result_dir, 'model.pt'))
 
-            print('Fixed Policy Agent Over')
             print('End Evaluation')
         
     maddpg.save(episode_rewards)  # save final model   
@@ -220,7 +221,7 @@ if __name__ == '__main__':
     for agent_id, reward in episode_rewards.items():
         ax.plot(x, get_running_reward(reward), label=agent_id)
     ax.plot(eval_ep, evaluation_score_agent, c='cyan', label='Evaluation against fixed adversary policy')
-    ax.plot(eval_ep, evaluation_score_agent, c='pink', label='Evaluation against fixed agent policy')
+    ax.plot(eval_ep, evaluation_score_adversary, c='pink', label='Evaluation against fixed agent policy')
     ax.legend()
     ax.set_xlabel('episode')
     ax.set_ylabel('reward')
