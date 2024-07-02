@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('env_name', type=str, default='simple_adversary_v3', help='name of the env',
                         choices=['simple_adversary_v3', 'simple_spread_v3', 'simple_tag_v3'])
-    parser.add_argument('--episode_num', type=int, default=50000,
+    parser.add_argument('--episode_num', type=int, default=70000,
                         help='total episode num during training procedure')
     parser.add_argument('--episode_length', type=int, default=25, help='steps per episode')
     parser.add_argument('--learn_interval', type=int, default=100,
