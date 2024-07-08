@@ -11,7 +11,7 @@ from main import get_env
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('env_name', type=str, default='simple_adversary_v2', help='name of the env',
-                        choices=['simple_adversary_v2', 'simple_spread_v2', 'simple_tag_v2'])
+                        choices=['simple_adversary_v3', 'simple_spread_v3', 'simple_tag_v3'])
     parser.add_argument('folder', type=str, help='name of the folder where model is saved')
     parser.add_argument('--episode-num', type=int, default=10, help='total episode num during evaluation')
     parser.add_argument('--episode-length', type=int, default=50, help='steps per episode')
@@ -32,13 +32,15 @@ if __name__ == '__main__':
     # reward of each episode of each agent
     episode_rewards = {agent: np.zeros(args.episode_num) for agent in env.agents}
     for episode in range(args.episode_num):
-        states = env.reset()
+        states, info = env.reset()
         agent_reward = {agent: 0 for agent in env.agents}  # agent reward of the current episode
         frame_list = []  # used to save gif
         while env.agents:  # interact with the env for an episode
             actions = maddpg.select_action(states)
-            next_states, rewards, dones, infos = env.step(actions)
-            frame_list.append(Image.fromarray(env.render(mode='rgb_array')))
+            next_states, rewards, terminations, dones, infos = env.step(actions)
+            print("Length of framelist", len(frame_list))
+            frame_list.append(Image.fromarray(env.render()))
+            print("Length of framelist", len(frame_list))
             states = next_states
 
             for agent_id, reward in rewards.items():  # update reward

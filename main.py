@@ -14,7 +14,7 @@ def get_env(env_name, ep_len=25):
     if env_name == 'simple_adversary_v3':
         new_env = simple_adversary_v3.parallel_env(max_cycles=ep_len)
     if env_name == 'simple_spread_v3':
-        new_env = simple_spread_v3.parallel_env(N=2, local_ratio=0.5, max_cycles=25, continuous_actions=False)
+        new_env = simple_spread_v3.parallel_env(N=2, local_ratio=0.5, max_cycles=25, continuous_actions=False, render_mode="human")
     if env_name == 'simple_tag_v3':
         new_env = simple_tag_v3.parallel_env(num_good=1, num_adversaries=1, num_obstacles=0, max_cycles=ep_len, continuous_actions=False)
 
